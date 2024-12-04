@@ -11,11 +11,34 @@ import java.io.File
 
 class ExportMenuAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
-        // 获取当前选中的文本≤
-        val selectedText = CopyPasteManager.getInstance().contents?.getTransferData(DataFlavor.stringFlavor) as? String
+        // 获取剪贴板内容
+        val transferable = CopyPasteManager.getInstance().contents
+        if (transferable == null) {
+            Messages.showWarningDialog("请先选择要导出的内容", "警告")
+            return
+        }
 
-        if (selectedText.isNullOrEmpty()) {
-            Messages.showWarningDialog("请先选择要导出的文本", "警告")
+        // 尝试获取文本内容
+        val selectedText = try {
+            if (transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                transferable.getTransferData(DataFlavor.stringFlavor) as? String
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+
+        // 尝试获取文件内容
+        val selectedFiles = try {
+            if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                transferable.getTransferData(DataFlavor.javaFileListFlavor) as? List<File>
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+
+        // 如果既不是文本也不是文件，则提示错误
+        if (selectedText == null && selectedFiles == null) {
+            Messages.showWarningDialog("请选择文本或文件进行导出", "警告")
             return
         }
 
@@ -26,25 +49,33 @@ class ExportMenuAction : AnAction() {
         // 显示文件选择对话框
         val selectedDirectory = FileChooser.chooseFile(descriptor, null, null)
         if (selectedDirectory != null) {
-            val file = File(selectedDirectory.path, "exported_text.txt")
-            // 将选中的文本保存为文件
             try {
-                // 如果文件不存在，创建新文件
-                if (!file.exists()) {
-                    file.createNewFile()
+                if (selectedText != null) {
+                    // 导出文本
+                    val file = File(selectedDirectory.path, "exported_text.txt")
+                    if (!file.exists()) {
+                        file.createNewFile()
+                    }
+                    file.writeText(selectedText)
+                    Messages.showInfoMessage("文本已保存至：${file.absolutePath}", "导出成功")
+                } else if (selectedFiles != null) {
+                    // 导出文件
+                    selectedFiles.forEach { sourceFile ->
+                        val targetFile = File(selectedDirectory.path, sourceFile.name)
+                        sourceFile.copyTo(targetFile, overwrite = true)
+                    }
+                    Messages.showInfoMessage("文件已导出至：${selectedDirectory.path}", "导出成功")
                 }
-                file.writeText(selectedText)
-                // 显示成功消息
-                Messages.showInfoMessage("文件已保存至：${file.absolutePath}", "导出成功")
             } catch (e: Exception) {
-                // 显示错误消息
-                Messages.showErrorDialog("保存文件时发生错误：${e.message}" + "\n" + file.absolutePath, "导出失败")
+                Messages.showErrorDialog("导出时发生错误：${e.message}", "导出失败")
             }
         }
     }
 
     override fun update(e: AnActionEvent) {
-        // 控制菜单项的可见性和启用状态
+        // 始终显示在右键菜单中
         e.presentation.isEnabledAndVisible = true
+        // 设置为上下文菜单项
+        e.presentation.setVisible(true)
     }
 }

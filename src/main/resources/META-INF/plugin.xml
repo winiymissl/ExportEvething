@@ -29,8 +29,7 @@
     <actions>
         <action id="com.example.exportevething.ExportMenuAction" class="com.example.exportevething.ExportMenuAction"
                 text="PopFile">
-            <add-to-group group-id="ToolsMenu" anchor="first"/>
-            <override-text place="MainMenu" text="Popup Dialog Action"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
         </action>
     </actions>
 </idea-plugin>
