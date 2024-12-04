@@ -39,7 +39,7 @@ A:Any
 
 ### Q: How can I report issues or suggest features?
 
-A: You can submit issues or suggestions on the plugin's GitHub page or contact us via [contact information].
+A: You can submit issues or suggestions on the plugin's GitHub page or contact us via email.
 
 ## Contributing
 
